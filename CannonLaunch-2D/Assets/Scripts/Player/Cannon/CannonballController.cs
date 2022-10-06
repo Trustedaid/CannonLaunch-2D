@@ -36,7 +36,7 @@ public class CannonballController : MonoBehaviour
         rb.isKinematic = false;
     }
 
-    public void DesactivateRb()
+    public void DeactivateRb()
     {
         rb.velocity = Vector3.zero;
         rb.angularVelocity = 0f;

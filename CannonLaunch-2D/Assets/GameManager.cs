@@ -20,11 +20,23 @@ public class GameManager : MonoBehaviour
 
     Camera cam;
 
-    public CannonballController cannonball;
+    // public CannonballController cannonball;
     public Trajectory trajectory;
-    [SerializeField] float pushForce = 4f;
 
-    bool isDragging = false;
+
+    [SerializeField]
+    public CannonballController cannonPrefab;
+
+    [SerializeField]
+    public float pushForce = 4f;
+    public float shootCooldown;
+    private float lastInputTime = Mathf.NegativeInfinity;
+    private float inputTimer;
+
+    private bool isShooting;
+    private bool isDragging = false;
+    private bool gotInput;
+    
 
     Vector2 startPoint;
     Vector2 endPoint;
@@ -33,36 +45,22 @@ public class GameManager : MonoBehaviour
 
     float distance;
 
-    
+
     void Start()
     {
         cam = Camera.main;
-        cannonball.DesactivateRb();
+       // cannonball.DeactivateRb();
     }
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
-        {
-            isDragging = true;
-            OnDragStart();
-        }
-        if (Input.GetMouseButtonUp(0))
-        {
-            isDragging = false;
-            OnDragEnd();
-        }
-
-        if (isDragging)
-        {
-            OnDrag();
-        }
+        Shoot();
     }
 
 
     void OnDragStart()
     {
-        cannonball.DesactivateRb();
+     //   cannonball.DeactivateRb();
         startPoint = cam.ScreenToWorldPoint(Input.mousePosition);
 
         trajectory.Show();
@@ -76,21 +74,81 @@ public class GameManager : MonoBehaviour
         direction = (startPoint - endPoint).normalized;
         force = direction * distance * pushForce;
 
-        Debug.DrawLine(startPoint, endPoint);
+        // Debug.DrawLine(startPoint, endPoint);
 
-        trajectory.UpdateDots(cannonball.pos, force);
+        trajectory.UpdateDots(transform.position, force);
     }
 
     void OnDragEnd()
     {
         //push the ball
-        cannonball.ActivateRb();
+        //   cannonball.ActivateRb();
 
-        cannonball.Launch(force);
+        //   cannonball.Launch(force);
 
+        CannonballController controller = GameObject.Instantiate(cannonPrefab);
+        controller.transform.position = transform.position;
+        controller.ActivateRb();
+        controller.Launch(force);
+ 
         trajectory.Hide();
 
+        StartCoroutine(Reload());
 
+
+
+    }
+    private IEnumerator Reload()
+    {
+        yield return new WaitForSeconds(2); // freeze for 2 seconds the code flow
+        isShooting = false;
+    }
+    private void Shoot()
+    {
+
+        if (Input.GetMouseButtonDown(0) && !isShooting)
+        {
+            isShooting = true;
+            isDragging = true;
+            OnDragStart();
+        }
+        if (Input.GetMouseButtonUp(0) && isDragging)
+        {
+            isDragging = false;
+            OnDragEnd();
+        }
+
+        if (isDragging)
+        {
+
+            OnDrag();
+        }
+
+    }
+    private void CheckShootInput()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+          
+                gotInput = true;
+                lastInputTime = Time.time;
+            
+        }
+
+    }
+
+
+
+    private void CheckShootCooldown()
+    {
+        if (isShooting)
+        {
+            gotInput = true;
+        }
+        if(Time.time >=  lastInputTime + inputTimer)
+        {
+            gotInput = false;
+        }
     }
 
 }
